@@ -1,0 +1,30 @@
+/* Tailwind retiré — tout en inline styles, pas besoin de Preflight */
+
+:root {
+  --navy: #0a0a14;
+  --navy-light: #13131f;
+  --gold: #FFD700;
+  --gold-light: #FFF8C0;
+  --violet: #A78BFA;
+  --violet-dark: #7C3AED;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  background: #0a0a14 !important;
+  color: white;
+  font-family: 'Quicksand', sans-serif;
+  min-height: 100vh;
+}
+
+#__next,
+main {
+  background: #0a0a14;
+  min-height: 100vh;
+}
