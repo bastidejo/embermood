@@ -93,4 +93,28 @@ Génère un planning de soirée complet et adapté. Réponds UNIQUEMENT avec un 
 
 Adapte TOUT au contexte : restrictions alimentaires, budget, lieu, nombre de personnes et style de soirée. Chaque section doit rester cohérente avec les choix faits, ne propose rien de contradictoire avec le lieu ou le type de soirée.
 Pour les films, tiens compte des plateformes disponibles (si aucune, suggère des classiques populaires).
-Les quantités dans la liste de courses doivent être pour exactement 
+Les quantités dans la liste de courses doivent être pour exactement ${peopleCount} personne(s).
+IMPORTANT : le champ "recette" de chaque plat (entree/plat/dessert) ne doit JAMAIS être vide ou vague — donne toujours au moins 3 étapes concrètes et numérotées, sauf si la soirée est en sortie (dans ce cas suis l'instruction ci-dessus sur le menu).
+IMPORTANT : reste RÉALISTE et ACCESSIBLE. Suppose que les gens n'ont QUE du matériel courant qu'on trouve normalement chez soi (TV/téléphone/enceinte basique, vaisselle standard, four/plaques classiques). N'utilise JAMAIS d'équipement spécialisé ou rare (vidéoprojecteur, écran de cinéma extérieur, matériel professionnel, ingrédients introuvables) sauf si le lieu choisi l'indique explicitement. En cas de doute, propose toujours l'option la plus simple et la plus réalisable avec ce qu'on a sous la main.`
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.8,
+      max_tokens: 3000,
+      response_format: { type: 'json_object' },
+    })
+
+    const content = completion.choices[0]?.message?.content
+    if (!content) throw new Error('Réponse vide de l\'IA')
+
+    const data = JSON.parse(content)
+    console.log('🌙 Menu généré par OpenAI :', JSON.stringify(data.menu, null, 2))
+    return NextResponse.json(data)
+  } catch (err: unknown) {
+    console.error('Erreur OpenAI:', err)
+    const message = err instanceof Error ? err.message : 'Erreur inconnue'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}

@@ -666,4 +666,369 @@ export default function Questionnaire() {
                       cursor: filmRerollsLeft <= 0 ? 'not-allowed' : 'pointer',
                     }}
                   >
-            
+                    {rerollingIndex === i ? '…' : '👀 Déjà vu ?'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Bloc dédié à l'impression / export PDF — toutes les sections, masqué à l'écran */}
+        <div className="print-only" style={{ display: 'none', padding: '2rem', color: '#111', background: 'white' }}>
+          <h1 style={{ fontFamily: "'Quicksand'", marginBottom: '1.5rem' }}>🌙 Votre soirée Embermood</h1>
+
+          <h2 style={{ marginTop: '1.5rem' }}>Planning</h2>
+          {results.planning.map((item, i) => (
+            <p key={i}><strong>{item.moment}</strong> — {item.description}</p>
+          ))}
+
+          <h2 style={{ marginTop: '1.5rem' }}>Menu</h2>
+          {(['entree', 'plat', 'dessert'] as const).map(course => (
+            <p key={course}><strong>{results.menu[course].nom}</strong> — {results.menu[course].recette}</p>
+          ))}
+
+          <h2 style={{ marginTop: '1.5rem' }}>Liste de courses</h2>
+          {results.courses.map((rayon, i) => (
+            <p key={i}><strong>{rayon.rayon}</strong> : {rayon.items.join(', ')}</p>
+          ))}
+
+          <h2 style={{ marginTop: '1.5rem' }}>Jeux</h2>
+          {results.jeux.map((jeu, i) => (
+            <p key={i}><strong>{jeu.nom}</strong> ({jeu.joueurs}, {jeu.duree}) — {jeu.description}</p>
+          ))}
+
+          <h2 style={{ marginTop: '1.5rem' }}>Films</h2>
+          {results.films.map((film, i) => (
+            <p key={i}><strong>{film.titre}</strong> ({film.genre}, {film.duree}) — {film.synopsis}</p>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  /* ── Quiz ── */
+  return (
+    <div style={S.page}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.5rem' }}>
+        {(stepKey !== 'people' || showGroupStepper) ? (
+          <button onClick={goBack} style={S.btn('ghost')}>
+            ← Retour
+          </button>
+        ) : (
+          <Link href="/" style={{ ...S.btn('ghost'), textDecoration: 'none' }}>
+            ← Accueil
+          </Link>
+        )}
+        <span style={{ color: '#4b5563', fontSize: '0.875rem', fontWeight: 600 }}>
+          {currentIndex} / {sequence.length}
+        </span>
+      </div>
+
+      {/* Barre de progression */}
+      <div style={{ height: 3, background: '#1f1f2e', margin: '0 1.5rem', borderRadius: 2 }}>
+        <div
+          style={{
+            height: '100%',
+            background: 'linear-gradient(90deg, #A78BFA, #FFD700)',
+            width: `${progress}%`,
+            borderRadius: 2,
+            transition: 'width 0.3s ease',
+          }}
+        />
+      </div>
+
+      {/* Contenu */}
+      <div style={{ flex: 1, padding: '2rem 1.5rem', maxWidth: 480, margin: '0 auto', width: '100%' }}>
+
+        {/* Nombre de personnes */}
+        {stepKey === 'people' && (
+          <>
+            <p style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>👥</p>
+            <h2 style={{ color: 'white', fontFamily: "'Quicksand', sans-serif", fontWeight: 700, fontSize: '1.4rem', marginBottom: '1.75rem' }}>
+              Combien êtes-vous ?
+            </h2>
+
+            {!showGroupStepper ? (
+              <div>
+                <button onClick={() => choosePeople(1)} style={S.card(answers.peopleCount === 1)}>
+                  Solo
+                </button>
+                <button onClick={() => choosePeople(2)} style={S.card(answers.peopleCount === 2)}>
+                  2 personnes
+                </button>
+                <button
+                  onClick={() => { setGroupCount(answers.peopleCount > 2 ? answers.peopleCount : 3); setShowGroupStepper(true) }}
+                  style={S.card(answers.peopleCount > 2)}
+                >
+                  Un groupe {answers.peopleCount > 2 ? `— ${answers.peopleCount} personnes` : ''}
+                </button>
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center' as const }}>
+                <p style={{ color: '#9ca3af', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
+                  Combien exactement ?
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                  <button onClick={() => setGroupCount(c => Math.max(3, c - 1))} style={S.stepBtn}>−</button>
+                  <span style={{ color: '#FFD700', fontFamily: "'Quicksand'", fontWeight: 700, fontSize: '2rem', minWidth: '3ch', display: 'inline-block', textAlign: 'center' as const }}>
+                    {groupCount}
+                  </span>
+                  <button onClick={() => setGroupCount(c => Math.min(50, c + 1))} style={S.stepBtn}>+</button>
+                </div>
+                <button onClick={() => choosePeople(groupCount)} style={{ ...S.btn(), width: '100%' }}>
+                  Continuer
+                </button>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Type de soirée (sauté en solo) */}
+        {stepKey === 'type' && (
+          <>
+            <p style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🌙</p>
+            <h2 style={{ color: 'white', fontFamily: "'Quicksand', sans-serif", fontWeight: 700, fontSize: '1.4rem', marginBottom: '1.75rem' }}>
+              Quel type de soirée ?
+            </h2>
+            <div>
+              {(answers.peopleCount > 2 ? TYPE_OPTIONS_GROUP : TYPE_OPTIONS_DUO).map(option => (
+                <button key={option} onClick={() => selectAndAdvance('type', option, 'moment')} style={S.card(answers.type === option)}>
+                  {option}
+                </button>
+              ))}
+              <button
+                onClick={() => setPhase('flame')}
+                style={{ ...S.card(false), borderColor: '#FF6B3540', color: '#FF6B35' }}
+              >
+                Soirée intime 🔥
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Jour ou nuit */}
+        {stepKey === 'moment' && (
+          <>
+            <p style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🕐</p>
+            <h2 style={{ color: 'white', fontFamily: "'Quicksand', sans-serif", fontWeight: 700, fontSize: '1.4rem', marginBottom: '1.75rem' }}>
+              Jour ou nuit ?
+            </h2>
+            <div>
+              {MOMENT_OPTIONS.map(option => (
+                <button key={option} onClick={() => selectAndAdvance('moment', option, 'location')} style={S.card(answers.moment === option)}>
+                  {option}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Lieu */}
+        {stepKey === 'location' && (
+          <>
+            <p style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>📍</p>
+            <h2 style={{ color: 'white', fontFamily: "'Quicksand', sans-serif", fontWeight: 700, fontSize: '1.4rem', marginBottom: '1.75rem' }}>
+              {showLocationDetail ? 'Quel type de sortie ?' : 'Où se déroule la soirée ?'}
+            </h2>
+
+            {!showLocationDetail ? (
+              <div>
+                {LOCATION_OPTIONS.map(option => (
+                  <button key={option} onClick={() => selectLocation(option)} style={S.card(answers.location === option)}>
+                    {option}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div>
+                {availableLocationDetails.map(detail => (
+                  <button key={detail} onClick={() => selectLocationDetail(detail)} style={S.card(answers.locationDetail === detail)}>
+                    {detail}
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Goûts — uniquement si la soirée est à la maison */}
+        {stepKey === 'gouts' && (
+          <>
+            <p style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🎨</p>
+            <h2 style={{ color: 'white', fontFamily: "'Quicksand', sans-serif", fontWeight: 700, fontSize: '1.4rem', marginBottom: '1.75rem' }}>
+              Vos goûts pour la soirée
+            </h2>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p style={S.fieldLabel}>Styles de films / séries <span style={{ color: '#4b5563' }}>(optionnel)</span></p>
+              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '0.5rem' }}>
+                {FILMS_GENRES.map(g => (
+                  <button key={g} onClick={() => toggle('filmsSeries', g)} style={S.pill(answers.filmsSeries.includes(g))}>
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p style={S.fieldLabel}>Genres de jeux de société <span style={{ color: '#4b5563' }}>(optionnel)</span></p>
+              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '0.5rem' }}>
+                {JEUX_GENRES.map(g => (
+                  <button key={g} onClick={() => toggle('jeuxSociete', g)} style={S.pill(answers.jeuxSociete.includes(g))}>
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p style={S.fieldLabel}>Alcool ?</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '0.5rem' }}>
+                {ALCOOL_OPTIONS.map(o => (
+                  <button key={o} onClick={() => setField('alcool', o)} style={S.pill(answers.alcool === o)}>
+                    {o}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '1.5rem' }}>
+              <p style={S.fieldLabel}>Ambiance musicale <span style={{ color: '#4b5563' }}>(optionnel)</span></p>
+              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '0.5rem' }}>
+                {MUSIQUE_OPTIONS.map(o => (
+                  <button key={o} onClick={() => setField('musique', o)} style={S.pill(answers.musique === o)}>
+                    {o}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '2rem' }}>
+              <p style={S.fieldLabel}>Cuisine préférée <span style={{ color: '#4b5563' }}>(optionnel)</span></p>
+              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '0.5rem' }}>
+                {CUISINE_OPTIONS.map(o => (
+                  <button key={o} onClick={() => setField('cuisine', o)} style={S.pill(answers.cuisine === o)}>
+                    {o}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button onClick={() => setStepKey('style')} style={{ ...S.btn(), width: '100%' }}>
+              Continuer
+            </button>
+          </>
+        )}
+
+        {/* Style */}
+        {stepKey === 'style' && (
+          <>
+            <p style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>✨</p>
+            <h2 style={{ color: 'white', fontFamily: "'Quicksand', sans-serif", fontWeight: 700, fontSize: '1.4rem', marginBottom: '1.75rem' }}>
+              Quel style de soirée ?
+            </h2>
+            <div>
+              {STYLE_OPTIONS.map(option => (
+                <button key={option} onClick={() => selectAndAdvance('style', option, 'budget')} style={S.card(answers.style === option)}>
+                  {option}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+
+        {/* Budget & restrictions */}
+        {stepKey === 'budget' && (
+          <>
+            <p style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>💰</p>
+            <h2 style={{
+              color: 'white',
+              fontFamily: "'Quicksand', sans-serif",
+              fontWeight: 700,
+              fontSize: '1.4rem',
+              marginBottom: '1.75rem',
+            }}>
+              Budget & préférences
+            </h2>
+
+            {/* Budget slider */}
+            <div style={{ marginBottom: '2rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>Budget par personne</span>
+                <span style={{ color: '#FFD700', fontWeight: 700, fontFamily: "'Quicksand'" }}>
+                  {answers.budget >= 100 ? '100€+' : `${answers.budget}€`}
+                </span>
+              </div>
+              <input
+                type="range"
+                min={5}
+                max={100}
+                step={5}
+                value={answers.budget}
+                onChange={e => setAnswers(p => ({ ...p, budget: +e.target.value }))}
+                style={{ width: '100%', accentColor: '#A78BFA', cursor: 'pointer' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+                <span style={{ color: '#4b5563', fontSize: '0.75rem' }}>5€</span>
+                <span style={{ color: '#4b5563', fontSize: '0.75rem' }}>100€+</span>
+              </div>
+            </div>
+
+            {/* Restrictions alimentaires */}
+            <div style={{ marginBottom: '1.75rem' }}>
+              <p style={{ color: '#9ca3af', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                Restrictions alimentaires <span style={{ color: '#4b5563' }}>(optionnel)</span>
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '0.5rem' }}>
+                {RESTRICTIONS.map(r => (
+                  <button key={r} onClick={() => toggle('restrictions', r)} style={S.pill(answers.restrictions.includes(r))}>
+                    {r}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Plateformes — uniquement pertinent si on reste à la maison / en extérieur / en vacances */}
+            {!isGoingOut && (
+              <div style={{ marginBottom: '2rem' }}>
+                <p style={{ color: '#9ca3af', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                  Plateformes disponibles <span style={{ color: '#4b5563' }}>(optionnel)</span>
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '0.5rem' }}>
+                  {PLATFORMS.map(p => (
+                    <button key={p} onClick={() => toggle('platforms', p)} style={S.pill(answers.platforms.includes(p))}>
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Erreur */}
+            {error && (
+              <div style={{ background: '#2d0e0e', border: '1px solid #7f1d1d', borderRadius: 8, padding: '0.75rem 1rem', marginBottom: '1rem', color: '#fca5a5', fontSize: '0.875rem' }}>
+                ⚠️ {error}
+              </div>
+            )}
+
+            {/* Bouton générer */}
+            <button
+              onClick={generate}
+              style={{
+                ...S.btn(),
+                width: '100%',
+                padding: '16px',
+                fontSize: '1.05rem',
+                boxShadow: '0 4px 24px rgba(167,139,250,0.3)',
+              }}
+            >
+              🌙 Générer ma soirée
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
